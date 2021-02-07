@@ -6,12 +6,13 @@ import com.fightpandemics.core.data.model.posts.Posts
 import com.fightpandemics.core.data.prefs.PreferenceStorage
 import com.fightpandemics.core.data.remote.posts.PostsRemoteDataSource
 import com.fightpandemics.core.domain.repository.PostsRepository
+import com.fightpandemics.core.result.Result
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
-import com.fightpandemics.core.result.Result
-import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
+import java.lang.Exception
 import javax.inject.Inject
 
 @FlowPreview
@@ -21,8 +22,6 @@ class PostsRepositoryImpl @Inject constructor(
     private val postsRemoteDataSource: PostsRemoteDataSource,
 ) : PostsRepository {
 
-    private val postsChannel = ConflatedBroadcastChannel<Result<List<Post>>>()
-
     override fun getPosts(): Flow<Result<Posts>> {
         return flow {
             val posts = postsRemoteDataSource.fetchPosts()
@@ -30,23 +29,42 @@ class PostsRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getPosts(objective: String?): Flow<Result<List<Post>>> {
-        /*val posts = postsRemoteDataSource.fetchPosts(objective)
-        postsChannel.offer(Result.Success(posts))
-        return postsChannel.asFlow()*/
+    // TODO - Save in database
+    override suspend fun getPosts(objective: String?): Flow<Result<*>> {
+        return flow<Result<*>> {
+            val posts = postsRemoteDataSource.fetchPosts(objective).body()!!
+            // .onEach { save(it) } //save to database, fetch from database and emit(dao.fetch)
+            emit(Result.Success(posts))
+//            delay(5000)
+//            getPosts(objective)
+        }.catch { cause ->
+            val error = postsRemoteDataSource.fetchPosts(objective).errorBody().toString()
+            emit(Result.Error(Exception(error)))
+        }
+    }
 
+    fun save(posts: List<Post>) {
+    }
+
+    override suspend fun getPostsByAuthor(
+        authorId: String
+    ): Flow<Result<List<Post>>> {
         return flow {
-            val posts = postsRemoteDataSource.fetchPosts(objective)
+            val posts = postsRemoteDataSource.fetchPostsByAuthor(authorId)
             emit(Result.Success(posts))
         }
     }
 
-    override suspend fun updatePost(postRequest: PostRequest) {
-        postsRemoteDataSource.updatePost(postRequest.post._id, postRequest)
+    override suspend fun editPost(postRequest: PostRequest) {
+        // postsRemoteDataSource.updatePost(postRequest._id, postRequest)
     }
 
-    override suspend fun updatePost(postId: String) {
+    override suspend fun deletePost(post: Post) {
+        postsRemoteDataSource.deletePost(post._id)
+    }
+
+    override suspend fun likePost(post: Post) {
         val userId = preferenceStorage.userId
-        postsRemoteDataSource.updatePost(postId, userId!!)
+        postsRemoteDataSource.likePost(post._id, userId!!, post.liked!!)
     }
 }

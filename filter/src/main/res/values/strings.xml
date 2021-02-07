@@ -10,20 +10,27 @@
     <string name="filter_from_whom">From Whom</string>
     <string name="filter_type">Type</string>
     <string name="button_clear_filters">Clear filters</string>
-    <string name="button_apply_filters">Apply filters</string>
+
+    <string name="button_apply_filter">Apply filter</string>
+    <string name="button_apply_filter_">Apply %1$d filter</string>
+    <string name="button_apply_filters">Apply %1$d filters</string>
+
+    <string name="card_applied_filters">%1$d applied</string>
+    <string name="location_filters_applied">1 applied</string>
+    <string name="filters_applied_placeholder">0 applied</string>
 
     <string name="chip_individuals">Individuals</string>
     <string name="chip_startup">Startup</string>
     <string name="chip_company">Company</string>
     <string name="chip_community">Community</string>
     <string name="chip_university">University</string>
-    <string name="chip_goverment">Goverment</string>
+    <string name="chip_government">Government</string>
     <string name="chip_health_care_providers">Health Care Providers</string>
     <string name="chip_non_profit">Non-profit</string>
     <string name="chip_others">Others</string>
 
     <string name="chip_medical_supplies">Medical Supplies</string>
-    <string name="chip_r_amp_d"><![CDATA[R&amp;D]]></string>
+    <string name="chip_r_amp_d">R&amp;D</string>
     <string name="chip_business">Business</string>
     <string name="chip_education">Education</string>
     <string name="chip_funding">Funding</string>
@@ -33,5 +40,10 @@
     <string name="chip_legal">Legal</string>
     <string name="chip_groceries_food">Groceries/Food</string>
     <string name="chip_wellbeing_mental">Wellbeing/Mental</string>
+    <string name="filters_title">Filters</string>
+
+    <!-- Location Search & Recycler view -->
+    <string name="share_my_location">Share my location</string>
+    <string name="zip_code_neighborhood_or_city">Zip code, neighborhood or city</string>
 
 </resources>

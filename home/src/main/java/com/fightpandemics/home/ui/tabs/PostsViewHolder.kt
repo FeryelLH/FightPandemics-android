@@ -1,57 +1,46 @@
 package com.fightpandemics.home.ui.tabs
 
 import android.annotation.SuppressLint
+import android.os.Build
 import android.view.LayoutInflater
-import android.view.View
-import android.widget.ImageView
-import android.widget.TextView
+import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
+import androidx.core.view.isVisible
+import androidx.navigation.findNavController
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.request.RequestOptions
 import com.fightpandemics.core.data.model.posts.Post
 import com.fightpandemics.core.utils.GlideApp
-import com.fightpandemics.core.widgets.ProfileImageView
 import com.fightpandemics.home.R
+import com.fightpandemics.home.databinding.ItemAllFeedBinding
+import com.fightpandemics.home.databinding.SingleChipLayoutBinding
 import com.fightpandemics.home.ui.HomeEventListener
+import com.fightpandemics.home.ui.HomeFragmentDirections
 import com.fightpandemics.home.utils.getPostCreated
+import com.fightpandemics.home.utils.sharePost
 import com.fightpandemics.home.utils.userInitials
-import com.google.android.material.button.MaterialButton
-import com.google.android.material.chip.Chip
-import com.google.android.material.chip.ChipGroup
-import com.google.android.material.internal.CheckableImageButton
 import timber.log.Timber
 import java.util.*
 
 class PostsViewHolder(
     private val homeEventListener: HomeEventListener,
-    itemView: View
-) : RecyclerView.ViewHolder(itemView) {
-
-    val user_objective = itemView.findViewById(R.id.objective) as TextView
-    val user_avatar = itemView.findViewById(R.id.user_avatar) as ProfileImageView
-    val user_full_name = itemView.findViewById(R.id.user_full_name) as TextView
-    val post_title = itemView.findViewById(R.id.post_title) as TextView
-    val time_posted = itemView.findViewById(R.id.time_posted) as TextView
-    val user_location = itemView.findViewById(R.id.user_location) as TextView
-    val post_content = itemView.findViewById(R.id.post_content) as TextView
-    val like = itemView.findViewById(R.id.like) as CheckableImageButton
-    val likes_count = itemView.findViewById(R.id.likes_count) as TextView
-    val comments_count = itemView.findViewById(R.id.comments_count) as TextView
-    val chipGroup = itemView.findViewById(R.id.chipGroup) as ChipGroup
+    private var itemBinding: ItemAllFeedBinding
+) : RecyclerView.ViewHolder(itemBinding.root) {
 
     @SuppressLint("RestrictedApi")
     fun bind(post: Post, onItemClickListener: ((Post) -> Unit)?) {
-        with(itemView) {
+        with(itemBinding.root) {
 
+            // Display author avatar
             if (post.author?.photo != null) {
                 GlideApp.with(this)
                     .load(post.author?.photo)
                     .centerCrop()
                     .apply(RequestOptions().override(layoutParams.width, layoutParams.height))
-                    .into(user_avatar)
+                    .into(itemBinding.userAvatar)
             } else {
-                user_avatar.setInitials(userInitials(post.author?.name))
-                user_avatar.setBorderColor(
+                itemBinding.userAvatar.setInitials(userInitials(post.author?.name))
+                itemBinding.userAvatar.setBorderColor(
                     ContextCompat.getColor(
                         this.context,
                         R.color.colorPrimary
@@ -59,38 +48,72 @@ class PostsViewHolder(
                 )
             }
 
-            user_objective.text = post.objective?.capitalize(Locale.ROOT)
-            user_full_name.text = post.author?.name
-            post_title.text = post.title
-            user_location.text =
-                post.author?.location?.state.plus(", ").plus(post.author?.location?.country)
-            post_content.text = post.content
+            //
+            itemBinding.objective.text = post.objective?.capitalize(Locale.ROOT)
+            itemBinding.userFullName.text = post.author?.name
+            itemBinding.postTitle.text = post.title
+            itemBinding.userLocation.text =
+                post.author?.location?.city.plus(", ").plus(post.author?.location?.country)
 
-            like.isChecked = post.liked!!
-            like.setOnClickListener {
-                post.liked = !post.liked!!
-                /*it.apply {
-                    isChecked = post
-                }*/
-                homeEventListener.onLikeClicked(post)
+            itemBinding.postContent.text = post.content
+
+            itemBinding.like.apply {
+                isChecked = post.liked!!
+                setOnClickListener {
+                    post.liked = !post.liked!!
+                    homeEventListener.onLikeClicked(post)
+                }
             }
-            likes_count.text = post.likesCount.toString()
-            comments_count.text = post.commentsCount.toString()
 
+            // Display Post like counts
+            itemBinding.likesCount.apply {
+                text = post.likesCount.toString()
+            }
+
+            // Display Post comment counts.
+            itemBinding.commentsCount.text = post.commentsCount.toString()
+
+            // Share a Post
+            itemBinding.share.setOnClickListener {
+                context.startActivity(sharePost(post.title, post._id))
+            }
+
+            // Display Post tags/types.
+            itemBinding.chipGroup.removeAllViews()
             for (type: String in post.types!!) {
-                val chip = LayoutInflater.from(this.context)
-                    .inflate(R.layout.single_chip_layout, chipGroup, false) as Chip
-                chip.text = type
-                chip.isEnabled = false
-                chipGroup.addView(chip)
+                val singleChipLayoutBinding = SingleChipLayoutBinding.inflate(
+                    LayoutInflater.from(this.context),
+                    itemBinding.chipGroup,
+                    false
+                )
+                singleChipLayoutBinding.chip.text = type
+                singleChipLayoutBinding.chip.isEnabled = false
+                itemBinding.chipGroup.addView(singleChipLayoutBinding.chip)
             }
 
-            val time_post = 12.toString()
-            time_posted.text = "Posted $time_post hrs ago"
-            Timber.e(getPostCreated("2020-10-15T15:44:04.009Z").toString())
+            // Display Post options to Edit or Delete his/her post.
+            when (post.author!!.id) {
+                homeEventListener.userId() -> {
+                    itemBinding.postOption.isVisible = true
+                    itemBinding.postOption.setOnClickListener {
+                        findNavController().navigate(
+                            HomeFragmentDirections
+                                .actionHomeFragmentToHomeOptionsBottomSheetFragment(post)
+                        )
+                    }
+                }
+                else -> itemBinding.postOption.isVisible = false
+            }
+
+            // Display time of Post
+            "Posted ${getPostCreated(post.createdAt.toString())} ago".also {
+                itemBinding.timePosted.text = it
+            }
+
+            Timber.e(getPostCreated(post.createdAt.toString()))
+            Timber.e(getPostCreated(post.updatedAt.toString())?.plus("EDITED"))
 
             setOnClickListener { onItemClickListener?.invoke(post) }
         }
     }
 }
-

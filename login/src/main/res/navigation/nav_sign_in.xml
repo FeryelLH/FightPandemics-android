@@ -7,7 +7,7 @@
 
     <fragment
         android:id="@+id/signInFragment"
-        android:name="com.fightpandemics.login.ui.SignInFragment"
+        android:name="com.fightpandemics.login.ui.signin.SignInFragment"
         android:label="fragment_sign_in"
         tools:layout="@layout/fragment_sign_in">
 
@@ -21,9 +21,15 @@
 
     <fragment
         android:id="@+id/signInEmailFragment"
-        android:name="com.fightpandemics.login.ui.SignInEmailFragment"
+        android:name="com.fightpandemics.login.ui.signin.SignInEmailFragment"
         android:label="fragment_sign_in_email"
         tools:layout="@layout/fragment_sign_in_email">
+
+        <action
+            android:id="@+id/action_signInEmailFragment_to_completeProfileFragment"
+            app:destination="@id/completeProfileFragment"
+            app:popUpTo="@id/signInEmailFragment"
+            app:popUpToInclusive="false" />
 
         <action
             android:id="@+id/action_signInEmailFragment_to_signUpFragment"
@@ -31,6 +37,13 @@
             app:popUpTo="@id/signInEmailFragment"
             app:popUpToInclusive="false" />
 
+    </fragment>
+
+    <fragment
+        android:id="@+id/completeProfileFragment"
+        android:name="com.fightpandemics.login.ui.profile.CompleteProfileFragment"
+        android:label="fragment_complete_profile"
+        tools:layout="@layout/fragment_complete_profile">
     </fragment>
 
     <include app:graph="@navigation/nav_sign_up" />

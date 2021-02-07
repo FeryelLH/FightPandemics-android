@@ -2,27 +2,22 @@ package com.fightpandemics.ui.splash
 
 import android.content.Context
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.fightpandemics.R
 import com.fightpandemics.core.result.EventObserver
 import com.fightpandemics.core.utils.ViewModelFactory
-import kotlinx.coroutines.delay
 import javax.inject.Inject
+
 
 class SplashFragment : Fragment() {
 
     @Inject
     lateinit var viewModelFactory: ViewModelFactory
     private val splashViewModel by viewModels<SplashViewModel> { viewModelFactory }
-
-    private val mLifecycleScope = this@SplashFragment.lifecycleScope
-
-    companion object {
-        fun newInstance() = SplashFragment()
-    }
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
@@ -31,21 +26,22 @@ class SplashFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        mLifecycleScope.launchWhenCreated {
-            delay(2000)
+        Handler(Looper.getMainLooper()).postDelayed({
             launch()
-        }
+        }, 2500)
     }
+
 
     private fun launch() {
         splashViewModel.launchDestination.observe(requireActivity(), EventObserver { destination ->
             when (destination) {
                 LaunchDestination.MAIN_ACTIVITY ->
-                    findNavController().navigate(R.id.action_splashFragment_to_mainActivity).apply { requireActivity().finish() }
+                    findNavController().navigate(R.id.action_splashFragment_to_onboardFragment)
                 LaunchDestination.ONBOARD ->
                     findNavController().navigate(R.id.action_splashFragment_to_onboardFragment)
             }.checkAllMatched
         })
+
     }
 }
 
